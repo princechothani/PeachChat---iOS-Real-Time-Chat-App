@@ -6,12 +6,40 @@
 //
 
 import SwiftUI
+import Firebase
 
 @main
 struct ChatApp_mainApp: App {
+    
+    init() {
+        FirebaseApp.configure()
+    }
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
+        }
+    }
+}
+
+struct MainView: View {
+    @StateObject private var authManager = AuthManager()
+    
+    var body: some View {
+        Group {
+            if authManager.isAuthenticated {
+                ChatListView()
+                    .environmentObject(authManager)
+            } else {
+                LoginView()
+                    .environmentObject(authManager)
+            }
+        }
+        .onAppear {
+            // Check authentication status
+            if authManager.currentUser != nil {
+                authManager.isAuthenticated = true
+            }
         }
     }
 }
