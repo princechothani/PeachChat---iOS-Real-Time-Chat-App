@@ -37,11 +37,11 @@ class MessagesManager: ObservableObject {
 					return
 				}
 
-				print("📥 Received \(documents.count) documents from Firestore")
+				print(" Received \(documents.count) documents from Firestore")
 				
 				let mapped: [Message] = documents.compactMap { document in
 					let data = document.data()
-					print("🔍 Processing document \(document.documentID): \(data)")
+					print(" Processing document \(document.documentID): \(data)")
 					
 					let id = (data["id"] as? String) ?? document.documentID
 					let text = data["text"] as? String ?? ""
@@ -49,28 +49,28 @@ class MessagesManager: ObservableObject {
 					let chatId = data["chatId"] as? String ?? "default"
 					let received = data["received"] as? Bool ?? false
 					
-					print("📋 Parsed: id=\(id), text='\(text)', senderId=\(senderId), chatId=\(chatId), received=\(received)")
+					print(" Parsed: id=\(id), text='\(text)', senderId=\(senderId), chatId=\(chatId), received=\(received)")
 					
 					// Fix timestamp parsing with better error handling
 					let date: Date
 					if let timestamp = data["timestamp"] as? Timestamp {
 						date = timestamp.dateValue()
-						print("📅 Firestore Timestamp: \(timestamp) -> Date: \(date)")
-						print("📅 Timestamp seconds: \(timestamp.seconds)")
-						print("📅 Timestamp nanoseconds: \(timestamp.nanoseconds)")
+						print(" Firestore Timestamp: \(timestamp) -> Date: \(date)")
+						print(" Timestamp seconds: \(timestamp.seconds)")
+						print(" Timestamp nanoseconds: \(timestamp.nanoseconds)")
 					} else if let timeInterval = data["timestamp"] as? Double {
 						date = Date(timeIntervalSince1970: timeInterval)
-						print("📅 TimeInterval: \(timeInterval) -> Date: \(date)")
+						print(" TimeInterval: \(timeInterval) -> Date: \(date)")
 					} else if let timeInterval = data["timestamp"] as? TimeInterval {
 						date = Date(timeIntervalSince1970: timeInterval)
-						print("📅 TimeInterval: \(timeInterval) -> Date: \(date)")
+						print(" TimeInterval: \(timeInterval) -> Date: \(date)")
 					} else {
 						date = Date()
-						print("📅 Using current date as fallback: \(date)")
+						print(" Using current date as fallback: \(date)")
 					}
 					
 					let message = Message(id: id, text: text, senderId: senderId, chatId: chatId, timestamp: date)
-					print("✅ Created message: \(message)")
+					print(" Created message: \(message)")
 					return message
 				}
 
@@ -81,7 +81,7 @@ class MessagesManager: ObservableObject {
 					if !newReceivedMessages.isEmpty && mapped.count > self.lastKnownMessageCount {
 						self.flaggedMessage = newReceivedMessages.last
 						self.hasNewMessage = true
-						print("🚩 New message flagged: \(self.flaggedMessage?.text ?? "")")
+						print(" New message flagged: \(self.flaggedMessage?.text ?? "")")
 					}
 					
 					self.messages = mapped
@@ -90,7 +90,7 @@ class MessagesManager: ObservableObject {
 					if let id = self.messages.last?.id {
 						self.lastMessageId = id
 					}
-					print("✅ Updated UI with \(mapped.count) messages: \(mapped.map { "'\($0.text)'" }.joined(separator: ", "))")
+					print(" Updated UI with \(mapped.count) messages: \(mapped.map { "'\($0.text)'" }.joined(separator: ", "))")
 				}
 			}
 	}
@@ -99,13 +99,13 @@ class MessagesManager: ObservableObject {
 	func clearFlag() {
 		hasNewMessage = false
 		flaggedMessage = nil
-		print("🚩 Flag cleared")
+		print(" Flag cleared")
 	}
 	
 	// Dismiss the flagged message
 	func dismissFlaggedMessage() {
 		clearFlag()
-		print("🚩 Flagged message dismissed")
+		print(" Flagged message dismissed")
 	}
 	
 	// Test function to simulate receiving a new message
@@ -121,7 +121,7 @@ class MessagesManager: ObservableObject {
 		DispatchQueue.main.async {
 			self.flaggedMessage = testMessage
 			self.hasNewMessage = true
-			print("🧪 Test message flagged: \(testMessage.text)")
+			print(" Test message flagged: \(testMessage.text)")
 		}
 	}
 	
@@ -134,7 +134,7 @@ class MessagesManager: ObservableObject {
 			return 
 		}
 		
-		print("📤 Sending message: '\(trimmed)'")
+		print(" Sending message: '\(trimmed)'")
 		
 		// Use current date and time
 		let currentDate = Date()
@@ -146,20 +146,20 @@ class MessagesManager: ObservableObject {
 			timestamp: currentDate
 		)
 		
-		print("📅 Creating message with current timestamp: \(currentDate)")
-		print("📅 Current timestamp seconds: \(Int(currentDate.timeIntervalSince1970))")
+		print(" Creating message with current timestamp: \(currentDate)")
+		print(" Current timestamp seconds: \(Int(currentDate.timeIntervalSince1970))")
 		
 		// Immediate optimistic UI update on main thread
 		DispatchQueue.main.async {
 			self.messages.append(newMessage)
 			self.lastMessageId = newMessage.id
-			print("✅ Added message to UI optimistically: '\(trimmed)'")
-			print("📊 Total messages in UI: \(self.messages.count)")
+			print(" Added message to UI optimistically: '\(trimmed)'")
+			print(" Total messages in UI: \(self.messages.count)")
 		}
 		
 		// Create Firestore timestamp from current date
 		let firestoreTimestamp = Timestamp(date: currentDate)
-		print("📅 Firestore timestamp being sent: \(firestoreTimestamp)")
+		print(" Firestore timestamp being sent: \(firestoreTimestamp)")
 		
 		let data: [String: Any] = [
 			"id": newMessage.id,
@@ -170,7 +170,7 @@ class MessagesManager: ObservableObject {
 			"timestamp": firestoreTimestamp
 		]
 		
-		print("📝 Writing to Firestore with data: \(data)")
+		print(" Writing to Firestore with data: \(data)")
 		
 		db.collection("messages").addDocument(data: data) { error in
 			if let error = error {
